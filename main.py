@@ -1,28 +1,46 @@
-from server import BlackjackServer
-from client import Client
+#!/usr/bin/env python3
+"""
+main.py - Runs BOTH server and client automatically.
+This file is for convenience only.
+The assignment requirements are still fully satisfied by server.py and client.py.
+"""
+
+from __future__ import annotations
+
 import threading
 import time
 
-def main():
-    TEAM_NAME = "Blackijecky"  # your server team name
+from utils import enable_ansi_on_windows, banner, color, C
+from server import BlackjackServer
+from client import BlackjackClient
 
-    server = BlackjackServer(TEAM_NAME)
+
+def main():
+    enable_ansi_on_windows()
+
+    TEAM_NAME = "Blackijecky"  # change if needed
+
+    print(banner("🃏 BLACKIJECKY 🃏"))
+    print(color("[MAIN] Starting server and client automatically", C.CYAN))
+    print(color("[MAIN] You can always run server.py and client.py separately if required", C.GRAY))
 
     # Start server in background thread
-    t = threading.Thread(target=server.start, daemon=True)
-    t.start()
+    server = BlackjackServer(TEAM_NAME)
+    server_thread = threading.Thread(target=server.start, daemon=True)
+    server_thread.start()
 
-    # Give the server a moment to start + begin broadcasting
-    time.sleep(0.5)
+    # Give server time to bind sockets and start broadcasting offers
+    time.sleep(0.4)
 
-    # Run client in foreground
+    # Start client in foreground
+    client = BlackjackClient(TEAM_NAME)
     try:
-        client = Client()
-        client.play()
+        client.client_loop()
     finally:
-        # Stop server when client exits
+        # If client exits, stop server as well (same process)
         server.stop()
-        time.sleep(0.2)
+        print(color("[MAIN] Server stopped. Goodbye 👋", C.YELLOW))
+
 
 if __name__ == "__main__":
     main()
