@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-server.py - Blackjack dealer/server.
-- Broadcasts UDP offers every second.
-- Accepts TCP connections and runs N rounds per client.
-- Uses a persistent 1-deck "shoe" per client connection so card counting makes sense.
-- Uses the exact protocol formats from the assignment.
-"""
 
 from __future__ import annotations
 
@@ -16,18 +9,7 @@ import threading
 import time
 from typing import List, Optional, Tuple
 
-from utils import (
-    C, banner, color,
-    MAGIC_COOKIE, UDP_LISTEN_PORT, OFFER_BROADCAST_INTERVAL_SEC, CLIENT_TIMEOUT_SEC,
-    MessageType, GameResult,
-    OFFER_FMT,
-    REQUEST_FMT, REQUEST_LEN,
-    CLIENT_PAYLOAD_FMT, CLIENT_PAYLOAD_LEN,
-    SERVER_PAYLOAD_FMT,
-    pad_name, unpad_name, recv_exact, maybe_consume_newline,
-    Card, card_value, card_str, get_local_ip, guess_broadcast_address
-)
-
+from utils import *
 
 def fresh_shuffled_deck() -> List[Card]:
     deck = [Card(rank=r, suit=s) for s in range(4) for r in range(1, 14)]
@@ -61,18 +43,18 @@ class BlackjackServer:
         self.running.set()
 
         # TCP server (any free port)
-        self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.tcp_sock.bind(("", 0))
+        self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #AF_INET=Ipv4, SOCK_STREAM=TCP
+        self.tcp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) #reuse address
+        self.tcp_sock.bind(("", 0)) # choose free port
         self.tcp_sock.listen()
-        self.tcp_port = self.tcp_sock.getsockname()[1]
+        self.tcp_port = self.tcp_sock.getsockname()[1] # server port
 
         # UDP broadcaster
-        self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #AF_INET=Ipv4, SOCK_DGRAM=UDP
+        self.udp_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1) #broadcast 255.255.255.255
 
         self.local_ip = get_local_ip()
-        self.broadcast_addr = guess_broadcast_address(self.local_ip)
+        self.broadcast_addr = guess_broadcast_address(self.local_ip) # find local reliable ip address
 
     def start(self) -> None:
         print(banner("🃏 BLACKJACK SERVER 🃏"))
@@ -80,7 +62,7 @@ class BlackjackServer:
         print(color(f"[SERVER] TCP port: {self.tcp_port}", C.GREEN))
         print(color(f"[SERVER] Broadcasting offers on UDP port {UDP_LISTEN_PORT} every {OFFER_BROADCAST_INTERVAL_SEC}s", C.YELLOW))
         print(color(f"[SERVER] Broadcast address: {self.broadcast_addr}", C.YELLOW))
-        print(color("[SERVER] Press Ctrl+C to stop the server.", C.GRAY))
+        print(color("[SERVER] Press Ctrl+C or type EXIT to stop the server.", C.GRAY))
 
         t_offer = threading.Thread(target=self._offer_loop, daemon=True)
         t_offer.start()
