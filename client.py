@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-"""
-client.py - Blackjack client.
-- Listens for UDP offers on 13122.
-- Connects via TCP and plays N rounds.
-- Supports manual decisions (Hit/Stand) and EXIT to quit.
-- Adds card counting (Hi-Lo) and shows "hot/cold" deck status (True Count).
-"""
 
 from __future__ import annotations
 
@@ -14,25 +7,13 @@ import struct
 import time
 from typing import Tuple
 
-from utils import (
-    C, banner, color,
-    MAGIC_COOKIE, UDP_LISTEN_PORT, CLIENT_TIMEOUT_SEC, OFFER_TIMEOUT_SEC,
-    MessageType, GameResult,
-    OFFER_FMT, OFFER_LEN,
-    REQUEST_FMT, REQUEST_LEN,
-    CLIENT_PAYLOAD_FMT, CLIENT_PAYLOAD_LEN,
-    SERVER_PAYLOAD_FMT, SERVER_PAYLOAD_LEN,
-    DECISION_HIT, DECISION_STAND,
-    pad_name, unpad_name, recv_exact,
-    card_str, card_value_rank
-)
+from utils import *
 
 
 class BlackjackClient:
     def __init__(self, team_name: str):
         self.team_name = team_name
 
-    # -------- Card counting (Hi-Lo) --------
     def hilo_delta(self, rank: int) -> int:
         # 2-6 = +1, 7-9 = 0, 10/J/Q/K/A = -1
         if 2 <= rank <= 6:
@@ -51,7 +32,6 @@ class BlackjackClient:
             return color(f"🧊 COLD (TC={true_count:+.2f})", C.RED)
         return color(f"😐 NEUTRAL (TC={true_count:+.2f})", C.YELLOW)
 
-    # -------- Networking --------
     def listen_for_offer(self) -> Tuple[str, int, str]:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
