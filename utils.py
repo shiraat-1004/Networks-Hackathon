@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-utils.py - Shared protocol, card utilities, packing/unpacking, and colored printing.
-"""
+
 
 from __future__ import annotations
 
